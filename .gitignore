@@ -1,9 +1,7 @@
-ompiled source #
+Compiled source #
 ###################
 *.exe
 
 # Logs and databases #
 ######################
 *.log
-
-
