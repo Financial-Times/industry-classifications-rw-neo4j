@@ -22,18 +22,15 @@ All arguments are optional, they default to a local Neo4j install on the default
 
 NB: the default batchSize is much higher than the throughput the instance data ingester currently can cope with.
 
+To get ALL the industry classifications that are stored in Neo4J currently in this projects under "static-data" as "IndustryClassification.json" and they can be loaded using https://github.com/Financial-Times/up-restutil project. 
+
 ## Updating the model
 The representation of an industry classification is held in the model.go in a struct called industry classification.
 
 `curl http://TODO:8080/transformers/industryclassification/344fdb1d-0585-31f7-814f-b478e54dbe1f | gojson -name=person`
 
 ## Building
-
-This service is built and deployed via Jenkins.
-
-<a href="http://ftjen10085-lvpr-uk-p:8181/view/JOBS-industry-classification-rw-neo4j/job/roles-rw-neo4j-build/">Build job</a>
-<a href="http://ftjen10085-lvpr-uk-p:8181/view/JOBS-industry-classification-rw-neo4j/job/roles-rw-neo4j-deploy-test/">Deploy job to Test</a>
-<a href="http://ftjen10085-lvpr-uk-p:8181/view/JOBS-industry-classification-rw-neo4j/job/roles-rw-neo4j-deploy-prod/">Deploy job to Prod</a>
+Currently this is not used, so not built or deployed
 
 The build works via git tags. To prepare a new release
 - update the version in /puppet/ft-industry_classification_rw_neo4j/Modulefile, e.g. to 0.0.12
