@@ -1,6 +1,6 @@
 // +build !jenkins
 
-package industryclassification
+package industryclassifications
 
 import (
 	"os"

@@ -1,4 +1,4 @@
-name    'ft-roles_rw_neo4j'
+name    'ft-industry_classifications_rw_neo4j'
 version '0.0.6'
 source 'UNKNOWN'
 author 'ft'

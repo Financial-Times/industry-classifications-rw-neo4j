@@ -1,4 +1,4 @@
-package industryclassification
+package industryclassifications
 
 type industryClassification struct {
 	UUID      string `json:"uuid"`

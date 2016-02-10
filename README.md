@@ -27,13 +27,11 @@ To get ALL the industry classifications that are stored in Neo4J currently in th
 e.g.
 
 ```
-cat ../industry-classification-rw-neo4j/static-data/industryClassification.json |  ./up-restutil put-resources uuid http://localhost:8080/industryclassification/
+cat ../industry-classification-rw-neo4j/static-data/industryClassifications.json |  ./up-restutil put-resources uuid http://localhost:8080/industryclassifications/
 ```
 
 ## Updating the model
 The representation of an industry classification is held in the model.go in a struct called industry classification.
-
-`curl http://TODO:8080/transformers/industryclassification/344fdb1d-0585-31f7-814f-b478e54dbe1f | gojson -name=person`
 
 ## Building
 Currently this is not used, so not built or deployed

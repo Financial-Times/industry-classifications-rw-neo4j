@@ -1,4 +1,4 @@
-package industryclassification
+package industryclassifications
 
 import (
 	"encoding/json"

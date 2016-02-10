@@ -7,7 +7,7 @@ import (
 
 	"github.com/Financial-Times/base-ft-rw-app-go"
 	"github.com/Financial-Times/go-fthealth/v1a"
-	"github.com/Financial-Times/industry-classification-rw-neo4j/industryclassification"
+	"github.com/Financial-Times/industry-classification-rw-neo4j/industryclassifications"
 	"github.com/Financial-Times/neo-cypher-runner-go"
 	"github.com/Financial-Times/neo-utils-go"
 	log "github.com/Sirupsen/logrus"
@@ -20,7 +20,6 @@ func main() {
 	app := cli.App("industry-classification-rw-neo4j", "A RESTful API for managing industry classification in neo4j")
 	neoURL := app.StringOpt("neo-url", "http://localhost:7474/db/data", "neo4j endpoint URL")
 	port := app.IntOpt("port", 8080, "Port to listen on")
-	env := app.StringOpt("env", "local", "environment this app is running in")
 	batchSize := app.IntOpt("batchSize", 1024, "Maximum number of statements to execute per batch")
 	graphiteTCPAddress := app.StringOpt("graphiteTCPAddress", "",
 		"Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)")
@@ -35,13 +34,13 @@ func main() {
 		}
 
 		batchRunner := neocypherrunner.NewBatchCypherRunner(neoutils.StringerDb{db}, *batchSize)
-		industryClassificationDriver := industryclassification.NewCypherDriver(batchRunner, db)
+		industryClassificationDriver := industryclassifications.NewCypherDriver(batchRunner, db)
 		industryClassificationDriver.Initialise()
 
 		baseftrwapp.OutputMetricsIfRequired(*graphiteTCPAddress, *graphitePrefix, *logMetrics)
 
 		engs := map[string]baseftrwapp.Service{
-			"industryclassification": industryClassificationDriver,
+			"industryclassifications": industryClassificationDriver,
 		}
 
 		var checks []v1a.Check
@@ -50,8 +49,8 @@ func main() {
 		}
 
 		baseftrwapp.RunServer(engs,
-			v1a.Handler("ft-industry_classification_rw_neo4j ServiceModule", "Writes 'industry classification' to Neo4j, usually as part of a bulk upload done on a schedule", checks...),
-			*port, "industry-classification-rw-neo4j", *env)
+			v1a.Handler("ft-industry_classifications_rw_neo4j ServiceModule", "Writes 'people' to Neo4j, usually as part of a bulk upload done on a schedule", checks...),
+			*port)
 	}
 
 	log.SetLevel(log.InfoLevel)
