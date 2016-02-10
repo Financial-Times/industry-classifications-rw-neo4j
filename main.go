@@ -7,7 +7,7 @@ import (
 
 	"github.com/Financial-Times/base-ft-rw-app-go"
 	"github.com/Financial-Times/go-fthealth/v1a"
-	"github.com/Financial-Times/industry-classification-rw-neo4j/industryclassifications"
+	"github.com/Financial-Times/industry-classifications-rw-neo4j/industryclassifications"
 	"github.com/Financial-Times/neo-cypher-runner-go"
 	"github.com/Financial-Times/neo-utils-go"
 	log "github.com/Sirupsen/logrus"
