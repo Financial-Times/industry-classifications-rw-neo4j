@@ -22,7 +22,13 @@ All arguments are optional, they default to a local Neo4j install on the default
 
 NB: the default batchSize is much higher than the throughput the instance data ingester currently can cope with.
 
-To get ALL the industry classifications that are stored in Neo4J currently in this projects under "static-data" as "IndustryClassification.json" and they can be loaded using https://github.com/Financial-Times/up-restutil project. 
+To get ALL the industry classifications that are stored in Neo4J currently in this projects under "static-data" as "IndustryClassification.json" and they can be loaded using https://github.com/Financial-Times/up-restutil project.
+
+e.g.
+
+```
+cat ../industry-classification-rw-neo4j/static-data/industryClassification.json |  ./up-restutil put-resources uuid http://localhost:8080/industryclassification/
+```
 
 ## Updating the model
 The representation of an industry classification is held in the model.go in a struct called industry classification.
