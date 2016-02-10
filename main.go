@@ -20,6 +20,7 @@ func main() {
 	app := cli.App("industry-classification-rw-neo4j", "A RESTful API for managing industry classification in neo4j")
 	neoURL := app.StringOpt("neo-url", "http://localhost:7474/db/data", "neo4j endpoint URL")
 	port := app.IntOpt("port", 8080, "Port to listen on")
+	env := app.StringOpt("env", "local", "environment this app is running in")
 	batchSize := app.IntOpt("batchSize", 1024, "Maximum number of statements to execute per batch")
 	graphiteTCPAddress := app.StringOpt("graphiteTCPAddress", "",
 		"Graphite TCP address, e.g. graphite.ft.com:2003. Leave as default if you do NOT want to output to graphite (e.g. if running locally)")
@@ -50,7 +51,7 @@ func main() {
 
 		baseftrwapp.RunServer(engs,
 			v1a.Handler("ft-industry_classifications_rw_neo4j ServiceModule", "Writes 'people' to Neo4j, usually as part of a bulk upload done on a schedule", checks...),
-			*port)
+			*port, "industry-classifications-rw-neo4j", *env)
 	}
 
 	log.SetLevel(log.InfoLevel)
