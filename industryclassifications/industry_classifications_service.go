@@ -3,19 +3,18 @@ package industryclassifications
 import (
 	"encoding/json"
 
-	"github.com/Financial-Times/neo-cypher-runner-go"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
 )
 
 // CypherDriver - CypherDriver
 type CypherDriver struct {
-	cypherRunner neocypherrunner.CypherRunner
+	cypherRunner neoutils.CypherRunner
 	indexManager neoutils.IndexManager
 }
 
 //NewCypherDriver instantiate driver
-func NewCypherDriver(cypherRunner neocypherrunner.CypherRunner, indexManager neoutils.IndexManager) CypherDriver {
+func NewCypherDriver(cypherRunner neoutils.CypherRunner, indexManager neoutils.IndexManager) CypherDriver {
 	return CypherDriver{cypherRunner, indexManager}
 }
 
