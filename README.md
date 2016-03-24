@@ -57,7 +57,7 @@ We run queries in batches. If a batch fails, all failing requests will get a 500
 Invalid json body input, or uuids that don't match between the path and the body will result in a 400 bad request response.
 
 Example:
-`curl -XPUT -H "X-Request-Id: 123" -H "Content-Type: application/json" localhost:8080/industryclassification/e8f669e0-e72f-3416-ad0c-09823ec6a27f --data '{"uuid":"e8f669e0-e72f-3416-ad0c-09823ec6a27f", "prefLabel":"Industrial Machinery"}'`
+`curl -XPUT -H "X-Request-Id: 123" -H "Content-Type: application/json" http://localhost:8080/industryclassifications/e8f669e0-e72f-3416-ad0c-09823ec6a27f --data '{"uuid":"e8f669e0-e72f-3416-ad0c-09823ec6a27f", "prefLabel":"Industrial Machinery"}'`
 
 ### GET
 Thie internal read should return what got written (i.e., there isn't a public read for industry classification and this is not intended to ever be public either)

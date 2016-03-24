@@ -77,7 +77,7 @@ func (pcd CypherDriver) Write(thing interface{}) error {
 
 	statement := `MERGE (n:Thing {uuid: {uuid}})
 				set n={allprops}
-				set n :IndustryClassification`
+				set n :IndustryClassification:Classification:Concept`
 
 	query := &neoism.CypherQuery{
 		Statement: statement,
