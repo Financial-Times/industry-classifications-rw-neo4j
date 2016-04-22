@@ -1,6 +1,6 @@
 FROM alpine:3.3
 ADD *.go .git /industry-classifications-rw-neo4j/
-ADD industry-classifications/*.go /industry-classifications-rw-neo4j/industry-classifications/
+ADD industryclassifications/*.go /industry-classifications-rw-neo4j/industryclassifications/
 RUN apk add --update bash \
   && apk --update add git go \
   && cd industry-classifications-rw-neo4j \
