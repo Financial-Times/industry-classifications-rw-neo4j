@@ -16,11 +16,12 @@ var industryClassificationDriver baseftrwapp.Service
 
 func TestDelete(t *testing.T) {
 	assert := assert.New(t)
-	uuid := "12345"
+	uuid := "54321"
 
 	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
 
 	industryClassificationToDelete := industryClassification{UUID: uuid, PrefLabel: "TestIndustryClassification"}
+	industryClassificationToDelete.AlternativeIdentifiers.UUIDS = []string{uuid}
 
 	assert.NoError(industryClassificationDriver.Write(industryClassificationToDelete), "Failed to write industry classification")
 
@@ -37,10 +38,11 @@ func TestDelete(t *testing.T) {
 
 func TestCreateAllValuesPresent(t *testing.T) {
 	assert := assert.New(t)
-	uuid := "12345"
+	uuid := "54321"
 	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
 
 	industryClassificationToWrite := industryClassification{UUID: uuid, PrefLabel: "TestIndustryClassfication"}
+	industryClassificationToWrite.AlternativeIdentifiers.UUIDS = []string{uuid}
 
 	assert.NoError(industryClassificationDriver.Write(industryClassificationToWrite), "Failed to write industry classification")
 
@@ -51,24 +53,26 @@ func TestCreateAllValuesPresent(t *testing.T) {
 
 func TestCreateHandlesSpecialCharacters(t *testing.T) {
 	assert := assert.New(t)
-	uuid := "12345"
+	uuid := "54321"
 	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
 
-	roleToWrite := industryClassification{UUID: uuid, PrefLabel: "Honcho`s pürfèct"}
+	industryClassificationToWrite := industryClassification{UUID: uuid, PrefLabel: "Honcho`s pürfèct"}
+	industryClassificationToWrite.AlternativeIdentifiers.UUIDS = []string{uuid}
 
-	assert.NoError(industryClassificationDriver.Write(roleToWrite), "Failed to write industry classification")
+	assert.NoError(industryClassificationDriver.Write(industryClassificationToWrite), "Failed to write industry classification")
 
-	readIndustryClassificationForUUIDAndCheckFieldsMatch(t, uuid, roleToWrite)
+	readIndustryClassificationForUUIDAndCheckFieldsMatch(t, uuid, industryClassificationToWrite)
 
 	cleanUp(t, uuid)
 }
 
 func TestCreateNotAllValuesPresent(t *testing.T) {
 	assert := assert.New(t)
-	uuid := "12345"
+	uuid := "54321"
 	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
 
 	industryClassificationToWrite := industryClassification{UUID: uuid}
+	industryClassificationToWrite.AlternativeIdentifiers.UUIDS = []string{uuid}
 
 	assert.NoError(industryClassificationDriver.Write(industryClassificationToWrite), "Failed to write industry classification")
 

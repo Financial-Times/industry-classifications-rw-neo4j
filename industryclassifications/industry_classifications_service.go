@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Financial-Times/neo-utils-go/neoutils"
+	"github.com/Sirupsen/logrus"
 	"github.com/jmcvetta/neoism"
 )
 
@@ -31,13 +32,15 @@ func (pcd CypherDriver) Check() error {
 // Read - reads a industry Classification given a UUID
 func (pcd CypherDriver) Read(uuid string) (interface{}, bool, error) {
 	results := []struct {
-		UUID      string `json:"uuid"`
-		PrefLabel string `json:"prefLabel"`
+		UUID      string   `json:"uuid"`
+		PrefLabel string   `json:"prefLabel"`
+		UUIDs     []string `json:"uuids"`
 	}{}
 
 	query := &neoism.CypherQuery{
-		Statement: `MATCH (n:IndustryClassification {uuid:{uuid}}) return n.uuid
-		as uuid, n.prefLabel as prefLabel`,
+		Statement: `MATCH (n:IndustryClassification {uuid:{uuid}})
+		OPTIONAL MATCH (upp:UPPIdentifier)-[:IDENTIFIES]->(n)
+		RETURN n.uuid as uuid, n.prefLabel as prefLabel, collect(upp.value) as uuids`,
 		Parameters: map[string]interface{}{
 			"uuid": uuid,
 		},
@@ -60,34 +63,56 @@ func (pcd CypherDriver) Read(uuid string) (interface{}, bool, error) {
 		UUID:      result.UUID,
 		PrefLabel: result.PrefLabel,
 	}
+	r.AlternativeIdentifiers.UUIDS = result.UUIDs
 	return r, true, nil
 }
 
 //Write - Writes a industry classification node
 func (pcd CypherDriver) Write(thing interface{}) error {
-	r := thing.(industryClassification)
+	industryToWrite := thing.(industryClassification)
 
-	params := map[string]interface{}{
-		"uuid": r.UUID,
+	//cleanUP all the previous IDENTIFIERS referring to that uuid
+	deletePreviousIdentifiersQuery := &neoism.CypherQuery{
+		Statement: `MATCH (t:Thing {uuid:{uuid}})
+		OPTIONAL MATCH (t)<-[iden:IDENTIFIES]-(i)
+		DELETE iden, i`,
+		Parameters: map[string]interface{}{
+			"uuid": industryToWrite.UUID,
+		},
 	}
 
-	if r.PrefLabel != "" {
-		params["prefLabel"] = r.PrefLabel
-	}
+	logrus.Infof("Query: %v", deletePreviousIdentifiersQuery)
 
+	//create-update node for IndustryClassification
 	statement := `MERGE (n:Thing {uuid: {uuid}})
 				set n={allprops}
 				set n :IndustryClassification:Classification:Concept`
 
-	query := &neoism.CypherQuery{
+	createIndustryClassficationQuery := &neoism.CypherQuery{
 		Statement: statement,
 		Parameters: map[string]interface{}{
-			"uuid":     r.UUID,
-			"allprops": params,
+			"uuid": industryToWrite.UUID,
+			"allprops": map[string]interface{}{
+				"uuid":      industryToWrite.UUID,
+				"prefLabel": industryToWrite.PrefLabel,
+			},
 		},
 	}
 
-	return pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery{query})
+	queryBatch := []*neoism.CypherQuery{deletePreviousIdentifiersQuery, createIndustryClassficationQuery}
+
+	identQuery := &neoism.CypherQuery{
+		Statement: `MERGE (t:Thing {uuid:{uuid}})
+					CREATE (i:Identifier {value:{uuid}})
+					MERGE (t)<-[:IDENTIFIES]-(i)
+					set i :Identifier:UPPIdentifier`,
+		Parameters: map[string]interface{}{
+			"uuid": industryToWrite.UUID,
+		},
+	}
+
+	queryBatch = append(queryBatch, identQuery)
+	return pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery(queryBatch))
 
 }
 
@@ -96,7 +121,10 @@ func (pcd CypherDriver) Delete(uuid string) (bool, error) {
 	clearNode := &neoism.CypherQuery{
 		Statement: `
 			MATCH (p:Thing {uuid: {uuid}})
-			REMOVE p:IndustryClassification
+			OPTIONAL MATCH (p)<-[ir:IDENTIFIES]-(i:Identifier)
+			REMOVE p:Concept
+			REMOVE p:Person
+			DELETE ir, i
 			SET p={props}
 		`,
 		Parameters: map[string]interface{}{
