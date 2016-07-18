@@ -5,3 +5,6 @@ Compiled source #
 # Logs and databases #
 ######################
 *.log
+
+
+*.idea
