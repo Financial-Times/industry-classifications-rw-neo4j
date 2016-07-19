@@ -4,4 +4,7 @@ WITH COLLECT (industries) as inds
 UNWIND inds as ind
 MERGE (indent:Identifier:UPPIdentifier{value:ind.uuid})-[:IDENTIFIES]->(ind)
 RETURN count(indent)
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
