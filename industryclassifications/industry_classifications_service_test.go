@@ -8,7 +8,6 @@ import (
 
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/jmcvetta/neoism"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +17,7 @@ func TestDelete(t *testing.T) {
 	assert := assert.New(t)
 	uuid := "12345"
 
-	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
+	industryClassificationDriver = getIndustryClassificationService(t)
 
 	industryClassificationToDelete := industryClassification{UUID: uuid, PrefLabel: "TestIndustryClassification"}
 
@@ -38,7 +37,7 @@ func TestDelete(t *testing.T) {
 func TestCreateAllValuesPresent(t *testing.T) {
 	assert := assert.New(t)
 	uuid := "12345"
-	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
+	industryClassificationDriver = getIndustryClassificationService(t)
 
 	industryClassificationToWrite := industryClassification{UUID: uuid, PrefLabel: "TestIndustryClassfication"}
 
@@ -52,7 +51,7 @@ func TestCreateAllValuesPresent(t *testing.T) {
 func TestCreateHandlesSpecialCharacters(t *testing.T) {
 	assert := assert.New(t)
 	uuid := "12345"
-	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
+	industryClassificationDriver = getIndustryClassificationService(t)
 
 	roleToWrite := industryClassification{UUID: uuid, PrefLabel: "Honcho`s pürfèct"}
 
@@ -66,7 +65,7 @@ func TestCreateHandlesSpecialCharacters(t *testing.T) {
 func TestCreateNotAllValuesPresent(t *testing.T) {
 	assert := assert.New(t)
 	uuid := "12345"
-	industryClassificationDriver = getIndustryClassificationCypherDriver(t)
+	industryClassificationDriver = getIndustryClassificationService(t)
 
 	industryClassificationToWrite := industryClassification{UUID: uuid}
 
@@ -86,16 +85,18 @@ func readIndustryClassificationForUUIDAndCheckFieldsMatch(t *testing.T, uuid str
 	assert.Equal(expectedIndustryClassification, storedIndustryClassification, "industry classification should be the same")
 }
 
-func getIndustryClassificationCypherDriver(t *testing.T) CypherDriver {
+func getIndustryClassificationService(t *testing.T) service {
 	assert := assert.New(t)
 	url := os.Getenv("NEO4J_TEST_URL")
 	if url == "" {
 		url = "http://localhost:7474/db/data"
 	}
 
-	db, err := neoism.Connect(url)
+	conf := neoutils.DefaultConnectionConfig()
+	conf.Transactional = false
+	db, err := neoutils.Connect(url, conf)
 	assert.NoError(err, "Failed to connect to Neo4j")
-	return NewCypherDriver(neoutils.StringerDb{db}, db)
+	return NewCypherIndustryClassifcationService(db)
 }
 
 func cleanUp(t *testing.T, uuid string) {
