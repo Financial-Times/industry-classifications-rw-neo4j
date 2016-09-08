@@ -8,28 +8,28 @@ import (
 )
 
 // CypherDriver - CypherDriver
-type CypherDriver struct {
-	cypherRunner neoutils.CypherRunner
-	indexManager neoutils.IndexManager
+type service struct {
+	conn neoutils.NeoConnection
 }
 
 //NewCypherDriver instantiate driver
-func NewCypherDriver(cypherRunner neoutils.CypherRunner, indexManager neoutils.IndexManager) CypherDriver {
-	return CypherDriver{cypherRunner, indexManager}
+func NewCypherIndustryClassifcationService(cypherRunner neoutils.NeoConnection) service {
+	return service{cypherRunner}
 }
 
 //Initialise initialisation of the indexes
-func (pcd CypherDriver) Initialise() error {
-	return neoutils.EnsureConstraints(pcd.indexManager, map[string]string{"IndustryClassification": "uuid"})
+func (s service) Initialise() error {
+	return s.conn.EnsureConstraints(map[string]string{
+		"IndustryClassification": "uuid"})
 }
 
 // Check - Feeds into the Healthcheck and checks whether we can connect to Neo and that the datastore isn't empty
-func (pcd CypherDriver) Check() error {
-	return neoutils.Check(pcd.cypherRunner)
+func (s service) Check() error {
+	return neoutils.Check(s.conn)
 }
 
 // Read - reads a industry Classification given a UUID
-func (pcd CypherDriver) Read(uuid string) (interface{}, bool, error) {
+func (s service) Read(uuid string) (interface{}, bool, error) {
 	results := []struct {
 		UUID      string `json:"uuid"`
 		PrefLabel string `json:"prefLabel"`
@@ -44,7 +44,7 @@ func (pcd CypherDriver) Read(uuid string) (interface{}, bool, error) {
 		Result: &results,
 	}
 
-	err := pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery{query})
+	err := s.conn.CypherBatch([]*neoism.CypherQuery{query})
 
 	if err != nil {
 		return industryClassification{}, false, err
@@ -64,7 +64,7 @@ func (pcd CypherDriver) Read(uuid string) (interface{}, bool, error) {
 }
 
 //Write - Writes a industry classification node
-func (pcd CypherDriver) Write(thing interface{}) error {
+func (s service) Write(thing interface{}) error {
 	r := thing.(industryClassification)
 
 	params := map[string]interface{}{
@@ -87,12 +87,12 @@ func (pcd CypherDriver) Write(thing interface{}) error {
 		},
 	}
 
-	return pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery{query})
+	return s.conn.CypherBatch([]*neoism.CypherQuery{query})
 
 }
 
 //Delete - Deletes a Role
-func (pcd CypherDriver) Delete(uuid string) (bool, error) {
+func (s service) Delete(uuid string) (bool, error) {
 	clearNode := &neoism.CypherQuery{
 		Statement: `
 			MATCH (p:Thing {uuid: {uuid}})
@@ -121,7 +121,7 @@ func (pcd CypherDriver) Delete(uuid string) (bool, error) {
 		},
 	}
 
-	err := pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery{clearNode, removeNodeIfUnused})
+	err := s.conn.CypherBatch([]*neoism.CypherQuery{clearNode, removeNodeIfUnused})
 
 	s1, err := clearNode.Stats()
 	if err != nil {
@@ -137,7 +137,7 @@ func (pcd CypherDriver) Delete(uuid string) (bool, error) {
 }
 
 // DecodeJSON - Decodes JSON into role
-func (pcd CypherDriver) DecodeJSON(dec *json.Decoder) (interface{}, string, error) {
+func (s service) DecodeJSON(dec *json.Decoder) (interface{}, string, error) {
 	r := industryClassification{}
 	err := dec.Decode(&r)
 	return r, r.UUID, err
@@ -145,7 +145,7 @@ func (pcd CypherDriver) DecodeJSON(dec *json.Decoder) (interface{}, string, erro
 }
 
 // Count - Returns a count of the number of roles in this Neo instance
-func (pcd CypherDriver) Count() (int, error) {
+func (s service) Count() (int, error) {
 
 	results := []struct {
 		Count int `json:"c"`
@@ -156,7 +156,7 @@ func (pcd CypherDriver) Count() (int, error) {
 		Result:    &results,
 	}
 
-	err := pcd.cypherRunner.CypherBatch([]*neoism.CypherQuery{query})
+	err := s.conn.CypherBatch([]*neoism.CypherQuery{query})
 
 	if err != nil {
 		return 0, err
