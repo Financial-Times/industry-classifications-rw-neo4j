@@ -2,9 +2,7 @@ package industryclassifications
 
 import (
 	"encoding/json"
-
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/Sirupsen/logrus"
 	"github.com/jmcvetta/neoism"
 )
 
@@ -68,7 +66,6 @@ func (s service) Read(uuid string) (interface{}, bool, error) {
 		UUID:      result.UUID,
 		PrefLabel: result.PrefLabel,
 	}
-	r.AlternativeIdentifiers.UUIDS = result.UUIDs
 	return r, true, nil
 }
 
@@ -79,23 +76,19 @@ func (s service) Write(thing interface{}) error {
 
 	//cleanUP all the previous IDENTIFIERS referring to that uuid
 	deletePreviousIdentifiersQuery := &neoism.CypherQuery{
-		Statement: `MATCH (t:Thing {uuid:{uuid}})
-		OPTIONAL MATCH (t)<-[iden:IDENTIFIES]-(i)
-		DELETE iden, i`,
+		Statement: `	MATCH (t:Thing {uuid:{uuid}})
+				OPTIONAL MATCH (t)<-[iden:IDENTIFIES]-(i)
+				DELETE iden, i`,
 		Parameters: map[string]interface{}{
 			"uuid": industryToWrite.UUID,
 		},
 	}
 
-	logrus.Infof("Query: %v", deletePreviousIdentifiersQuery)
-
 	//create-update node for IndustryClassification
-	statement := `MERGE (n:Thing {uuid: {uuid}})
-				set n={allprops}
-				set n :IndustryClassification:Classification:Concept`
-
 	createIndustryClassficationQuery := &neoism.CypherQuery{
-		Statement: statement,
+		Statement: `	MERGE (n:Thing {uuid: {uuid}})
+				set n={allprops}
+				set n :IndustryClassification:Classification:Concept`,
 		Parameters: map[string]interface{}{
 			"uuid": industryToWrite.UUID,
 			"allprops": map[string]interface{}{
@@ -108,10 +101,9 @@ func (s service) Write(thing interface{}) error {
 	queryBatch := []*neoism.CypherQuery{deletePreviousIdentifiersQuery, createIndustryClassficationQuery}
 
 	identQuery := &neoism.CypherQuery{
-		Statement: `MERGE (t:Thing {uuid:{uuid}})
-					CREATE (i:Identifier {value:{uuid}})
-					MERGE (t)<-[:IDENTIFIES]-(i)
-					set i :Identifier:UPPIdentifier`,
+		Statement: `	MERGE (t:Thing {uuid:{uuid}})
+				CREATE (i:Identifier {value:{uuid}})-[:IDENTIFIES]->(t)
+				set i :Identifier:UPPIdentifier`,
 		Parameters: map[string]interface{}{
 			"uuid": industryToWrite.UUID,
 		},
@@ -127,10 +119,8 @@ func (s service) Delete(uuid string) (bool, error) {
 	clearNode := &neoism.CypherQuery{
 		Statement: `
 			MATCH (p:Thing {uuid: {uuid}})
-			OPTIONAL MATCH (p)<-[ir:IDENTIFIES]-(i:Identifier)
 			REMOVE p:Concept
-			REMOVE p:Person
-			DELETE ir, i
+			REMOVE p:IndustryClassification
 			SET p={props}
 		`,
 		Parameters: map[string]interface{}{
@@ -144,11 +134,12 @@ func (s service) Delete(uuid string) (bool, error) {
 
 	removeNodeIfUnused := &neoism.CypherQuery{
 		Statement: `
-			MATCH (p:Thing {uuid: {uuid}})
-			OPTIONAL MATCH (p)-[a]-(x)
-			WITH p, count(a) AS relCount
-			WHERE relCount = 0
-			DELETE p
+			MATCH (thing:Thing {uuid: {uuid}})
+ 			OPTIONAL MATCH (thing)-[ir:IDENTIFIES]-(id:Identifier)
+ 			OPTIONAL MATCH (thing)-[a]-(x:Thing)
+ 			WITH ir, id, thing, count(a) AS relCount
+  			WHERE relCount = 0
+ 			DELETE ir, id, thing
 		`,
 		Parameters: map[string]interface{}{
 			"uuid": uuid,
