@@ -65,12 +65,12 @@ Thie internal read should return what got written (i.e., there isn't a public re
 
 If not found, you'll get a 404 response.
 
-Empty fields are omitted from the response.
-`curl -H "X-Request-Id: 123" localhost:8080/industryclassification/e8f669e0-e72f-3416-ad0c-09823ec6a27f`
+Empty fields are omitted from the response.46d1741e-8075-3a4a-872c-71d8130fcb71
+`curl -H "X-Request-Id: 123" localhost:8080/industryclassifications/e8f669e0-e72f-3416-ad0c-09823ec6a27f`
 
 ### DELETE
 Will return 204 if successful, 404 if not found
-`curl -XDELETE -H "X-Request-Id: 123" localhost:8080/industryclassification/e8f669e0-e72f-3416-ad0c-09823ec6a27f`
+`curl -XDELETE -H "X-Request-Id: 123" localhost:8080/industryclassifications/e8f669e0-e72f-3416-ad0c-09823ec6a27f`
 
 ### Admin endpoints
 Healthchecks: [http://localhost:8080/__health](http://localhost:8080/__health)
