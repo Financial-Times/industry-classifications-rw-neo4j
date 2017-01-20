@@ -87,6 +87,7 @@ func (s service) Write(thing interface{}) error {
 	//create-update node for IndustryClassification
 	createIndustryClassficationQuery := &neoism.CypherQuery{
 		Statement: `	MERGE (n:Thing {uuid: {uuid}})
+				CREATE (i:Identifier {value:{uuid}})-[:IDENTIFIES]->(t)
 				set n={allprops}
 				set n :IndustryClassification:Classification:Concept`,
 		Parameters: map[string]interface{}{
