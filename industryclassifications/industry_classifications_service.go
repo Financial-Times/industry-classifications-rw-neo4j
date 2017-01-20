@@ -2,7 +2,6 @@ package industryclassifications
 
 import (
 	"encoding/json"
-
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
 )
@@ -20,7 +19,12 @@ func NewCypherIndustryClassifcationService(cypherRunner neoutils.NeoConnection) 
 //Initialise initialisation of the indexes
 func (s service) Initialise() error {
 	return s.conn.EnsureConstraints(map[string]string{
-		"IndustryClassification": "uuid"})
+		"Thing":                  "uuid",
+		"Concept":                "uuid",
+		"Classification":         "uuid",
+		"IndustryClassification": "uuid",
+		"FactsetIdentifier":      "value",
+		"UPPIdentifier":          "value"})
 }
 
 // Check - Feeds into the Healthcheck and checks whether we can connect to Neo and that the datastore isn't empty
@@ -31,13 +35,15 @@ func (s service) Check() error {
 // Read - reads a industry Classification given a UUID
 func (s service) Read(uuid string) (interface{}, bool, error) {
 	results := []struct {
-		UUID      string `json:"uuid"`
-		PrefLabel string `json:"prefLabel"`
+		UUID      string   `json:"uuid"`
+		PrefLabel string   `json:"prefLabel"`
+		UUIDs     []string `json:"uuids"`
 	}{}
 
 	query := &neoism.CypherQuery{
-		Statement: `MATCH (n:IndustryClassification {uuid:{uuid}}) return n.uuid
-		as uuid, n.prefLabel as prefLabel`,
+		Statement: `MATCH (n:IndustryClassification {uuid:{uuid}})
+		OPTIONAL MATCH (upp:UPPIdentifier)-[:IDENTIFIES]->(n)
+		RETURN n.uuid as uuid, n.prefLabel as prefLabel, collect(upp.value) as uuids`,
 		Parameters: map[string]interface{}{
 			"uuid": uuid,
 		},
@@ -65,30 +71,47 @@ func (s service) Read(uuid string) (interface{}, bool, error) {
 
 //Write - Writes a industry classification node
 func (s service) Write(thing interface{}) error {
-	r := thing.(industryClassification)
+	industryToWrite := thing.(industryClassification)
 
-	params := map[string]interface{}{
-		"uuid": r.UUID,
-	}
 
-	if r.PrefLabel != "" {
-		params["prefLabel"] = r.PrefLabel
-	}
-
-	statement := `MERGE (n:Thing {uuid: {uuid}})
-				set n={allprops}
-				set n :IndustryClassification:Classification:Concept`
-
-	query := &neoism.CypherQuery{
-		Statement: statement,
+	//cleanUP all the previous IDENTIFIERS referring to that uuid
+	deletePreviousIdentifiersQuery := &neoism.CypherQuery{
+		Statement: `	MATCH (t:Thing {uuid:{uuid}})
+				OPTIONAL MATCH (t)<-[iden:IDENTIFIES]-(i)
+				DELETE iden, i`,
 		Parameters: map[string]interface{}{
-			"uuid":     r.UUID,
-			"allprops": params,
+			"uuid": industryToWrite.UUID,
 		},
 	}
 
-	return s.conn.CypherBatch([]*neoism.CypherQuery{query})
+	//create-update node for IndustryClassification
+	createIndustryClassficationQuery := &neoism.CypherQuery{
+		Statement: `	MERGE (n:Thing {uuid: {uuid}})
+				set n={allprops}
+				set n :IndustryClassification:Classification:Concept`,
+		Parameters: map[string]interface{}{
+			"uuid": industryToWrite.UUID,
+			"allprops": map[string]interface{}{
+				"uuid":      industryToWrite.UUID,
+				"prefLabel": industryToWrite.PrefLabel,
+			},
+		},
+	}
 
+	queryBatch := []*neoism.CypherQuery{deletePreviousIdentifiersQuery, createIndustryClassficationQuery}
+
+	identQuery := &neoism.CypherQuery{
+		Statement: `	MERGE (t:Thing {uuid:{uuid}})
+				CREATE (i:Identifier {value:{uuid}})-[:IDENTIFIES]->(t)
+				set i :Identifier:UPPIdentifier`,
+		Parameters: map[string]interface{}{
+			"uuid": industryToWrite.UUID,
+		},
+	}
+
+	queryBatch = append(queryBatch, identQuery)
+
+	return s.conn.CypherBatch(queryBatch)
 }
 
 //Delete - Deletes a Role
@@ -96,6 +119,7 @@ func (s service) Delete(uuid string) (bool, error) {
 	clearNode := &neoism.CypherQuery{
 		Statement: `
 			MATCH (p:Thing {uuid: {uuid}})
+			REMOVE p:Concept
 			REMOVE p:IndustryClassification
 			SET p={props}
 		`,
@@ -110,11 +134,12 @@ func (s service) Delete(uuid string) (bool, error) {
 
 	removeNodeIfUnused := &neoism.CypherQuery{
 		Statement: `
-			MATCH (p:Thing {uuid: {uuid}})
-			OPTIONAL MATCH (p)-[a]-(x)
-			WITH p, count(a) AS relCount
-			WHERE relCount = 0
-			DELETE p
+			MATCH (thing:Thing {uuid: {uuid}})
+ 			OPTIONAL MATCH (thing)-[ir:IDENTIFIES]-(id:Identifier)
+ 			OPTIONAL MATCH (thing)-[a]-(x:Thing)
+ 			WITH ir, id, thing, count(a) AS relCount
+  			WHERE relCount = 0
+ 			DELETE ir, id, thing
 		`,
 		Parameters: map[string]interface{}{
 			"uuid": uuid,
