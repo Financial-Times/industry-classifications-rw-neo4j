@@ -1,6 +1,5 @@
 # Industry Classification Reader/Writer for Neo4j (industry-classification-rw-neo4j)
-[![Circle CI](https://circleci.com/gh/Financial-Times/industry-classifications-rw-neo4j.svg?style=shield)](https://circleci.com/gh/Financial-Times/industry-classifications-rw-neo4j)[![Go Report Card](https://goreportcard.com/badge/github.com/Financial-Times/industry-classifications-rw-neo4j)](https://goreportcard.com/report/github.com/Financial-Times/industry-classifications-rw-neo4j) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/industry-classifications-rw-neo4j/badge.svg)](https://coveralls.io/github/Financial-Times/industry-classifications-rw-neo4j)
- 
+[![Circle CI](https://circleci.com/gh/Financial-Times/industry-classifications-rw-neo4j.svg?style=shield)](https://circleci.com/gh/Financial-Times/industry-classifications-rw-neo4j)[![Go Report Card](https://goreportcard.com/badge/github.com/Financial-Times/industry-classifications-rw-neo4j)](https://goreportcard.com/report/github.com/Financial-Times/industry-classifications-rw-neo4j) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/industry-classifications-rw-neo4j/badge.svg)](https://coveralls.io/github/Financial-Times/industry-classifications-rw-neo4j) 
 __An API for reading/writing industry classification into Neo4j. Expects the industry classification json supplied to be in the following format:
 
 {"uuid":"e8f669e0-e72f-3416-ad0c-09823ec6a27f", "prefLabel":"Industrial Machinery"}
