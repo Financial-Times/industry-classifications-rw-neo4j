@@ -2,6 +2,7 @@ package industryclassifications
 
 import (
 	"encoding/json"
+
 	"github.com/Financial-Times/neo-utils-go/neoutils"
 	"github.com/jmcvetta/neoism"
 )
@@ -33,7 +34,7 @@ func (s service) Check() error {
 }
 
 // Read - reads a industry Classification given a UUID
-func (s service) Read(uuid string) (interface{}, bool, error) {
+func (s service) Read(uuid string, transactionID string) (interface{}, bool, error) {
 	results := []struct {
 		UUID      string   `json:"uuid"`
 		PrefLabel string   `json:"prefLabel"`
@@ -70,9 +71,8 @@ func (s service) Read(uuid string) (interface{}, bool, error) {
 }
 
 //Write - Writes a industry classification node
-func (s service) Write(thing interface{}) error {
+func (s service) Write(thing interface{}, transactionID string) error {
 	industryToWrite := thing.(industryClassification)
-
 
 	//cleanUP all the previous IDENTIFIERS referring to that uuid
 	deletePreviousIdentifiersQuery := &neoism.CypherQuery{
@@ -116,7 +116,7 @@ func (s service) Write(thing interface{}) error {
 }
 
 //Delete - Deletes a Role
-func (s service) Delete(uuid string) (bool, error) {
+func (s service) Delete(uuid string, transactionID string) (bool, error) {
 	clearNode := &neoism.CypherQuery{
 		Statement: `
 			MATCH (p:Thing {uuid: {uuid}})
