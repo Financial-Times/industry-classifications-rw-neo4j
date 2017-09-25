@@ -6,24 +6,24 @@ import (
 	"os"
 	"testing"
 
+	"encoding/json"
+	"fmt"
+
 	"github.com/Financial-Times/base-ft-rw-app-go/baseftrwapp"
 	"github.com/Financial-Times/neo-utils-go/neoutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/jmcvetta/neoism"
-	"fmt"
-	"encoding/json"
 	"github.com/Financial-Times/organisations-rw-neo4j/organisations"
+	"github.com/jmcvetta/neoism"
+	"github.com/stretchr/testify/assert"
 )
-
 
 const (
 	industryClassificationUuid = "f21a5cc0-d326-4e62-b84a-d840c2209fee"
-	organisationUuid =  "f9694ba7-eab0-4ce0-8e01-ff64bccb813c"
+	organisationUuid           = "f9694ba7-eab0-4ce0-8e01-ff64bccb813c"
 )
 
-var fullIndustryClassification = industryClassification {
+var fullIndustryClassification = industryClassification{
 	PrefLabel: "PrefLabel",
-	UUID: industryClassificationUuid,
+	UUID:      industryClassificationUuid,
 }
 
 func TestCreateAllValuesPresent(t *testing.T) {
@@ -34,8 +34,8 @@ func TestCreateAllValuesPresent(t *testing.T) {
 
 	defer cleanDB([]string{industryClassificationUuid}, db, t, assert)
 
-	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification), "Failed to write industry classfication")
-	actual, found, err := getCypherDriver(db).Read(fullIndustryClassification.UUID)
+	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification, "TID_TEST"), "Failed to write industry classfication")
+	actual, found, err := getCypherDriver(db).Read(fullIndustryClassification.UUID, "TID_TEST")
 
 	assert.NoError(err)
 	assert.True(found)
@@ -49,15 +49,15 @@ func TestDeleteWithRelationshipsMaintainsRelationships(t *testing.T) {
 
 	defer cleanDB([]string{industryClassificationUuid, organisationUuid}, db, t, assert)
 
-	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification), "Failed to write industry classfication")
+	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification, "TID_TEST"), "Failed to write industry classfication")
 	writeOrganisation(assert, db)
 
-	found, err := industryClassificationDriver.Delete(industryClassificationUuid)
+	found, err := industryClassificationDriver.Delete(industryClassificationUuid, "TID_TEST")
 
 	assert.True(found, "Didn't manage to delete industry classification for uuid %", industryClassificationUuid)
 	assert.NoError(err, "Error deleting industry classification for uuid %s", industryClassificationUuid)
 
-	p, found, err := industryClassificationDriver.Read(industryClassificationUuid)
+	p, found, err := industryClassificationDriver.Read(industryClassificationUuid, "TID_TEST")
 
 	assert.Equal(industryClassification{}, p, "Found industry classification %s who should have been deleted", p)
 	assert.False(found, "Found industry classification for uuid %s who should have been deleted", industryClassificationUuid)
@@ -72,20 +72,19 @@ func TestDeleteWillDeleteEntireNodeIfNoRelationship(t *testing.T) {
 
 	defer cleanDB([]string{industryClassificationUuid}, db, t, assert)
 
-	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification), "Failed to write industry classification")
+	assert.NoError(industryClassificationDriver.Write(fullIndustryClassification, "TID_TEST"), "Failed to write industry classification")
 
-	found, err := industryClassificationDriver.Delete(industryClassificationUuid)
+	found, err := industryClassificationDriver.Delete(industryClassificationUuid, "TID_TEST")
 	assert.True(found, "Didn't manage to delete industry classification for uuid %", industryClassificationUuid)
 	assert.NoError(err, "Error deleting industry classification for uuid %s", industryClassificationUuid)
 
-	p, found, err := industryClassificationDriver.Read(industryClassificationUuid)
+	p, found, err := industryClassificationDriver.Read(industryClassificationUuid, "TID_TEST")
 
 	assert.Equal(industryClassification{}, p, "Found person %s who should have been deleted", p)
 	assert.False(found, "Found industry classification for uuid %s who should have been deleted", industryClassificationUuid)
 	assert.NoError(err, "Error trying to find industry classification for uuid %s", industryClassificationUuid)
 	assert.Equal(false, doesThingExistAtAll(industryClassificationUuid, db, t, assert), "Found thing who should have been deleted uuid: %s", industryClassificationUuid)
 }
-
 
 func writeOrganisation(assert *assert.Assertions, db neoutils.NeoConnection) baseftrwapp.Service {
 	orgRW := organisations.NewCypherOrganisationService(db)
@@ -100,7 +99,7 @@ func writeJSONToService(service baseftrwapp.Service, pathToJSONFile string, asse
 	dec := json.NewDecoder(f)
 	inst, _, errr := service.DecodeJSON(dec)
 	assert.NoError(errr)
-	errrr := service.Write(inst)
+	errrr := service.Write(inst, "TID_TEST")
 	assert.NoError(errrr)
 }
 
