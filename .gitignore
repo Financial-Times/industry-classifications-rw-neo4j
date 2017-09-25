@@ -7,4 +7,6 @@ Compiled source #
 *.log
 
 
-*.idea
+vendor/*/
+.idea*
+*.iml
