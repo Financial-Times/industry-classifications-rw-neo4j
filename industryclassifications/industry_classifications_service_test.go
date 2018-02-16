@@ -80,6 +80,7 @@ func TestDeleteWillDeleteEntireNodeIfNoRelationship(t *testing.T) {
 
 	p, found, err := industryClassificationDriver.Read(industryClassificationUuid, "TID_TEST")
 
+	assert.True(isAThingOnlyAThing(industryClassificationUuid, db, t, assert), "Found thing with more labels than expected who should have been deleted uuid: %s", industryClassificationUuid)
 	assert.Equal(industryClassification{}, p, "Found person %s who should have been deleted", p)
 	assert.False(found, "Found industry classification for uuid %s who should have been deleted", industryClassificationUuid)
 	assert.NoError(err, "Error trying to find industry classification for uuid %s", industryClassificationUuid)
@@ -155,6 +156,36 @@ func doesThingExistWithIdentifiers(uuid string, db neoutils.NeoConnection, t *te
 
 	return true
 }
+
+func isAThingOnlyAThing(uuid string, db neoutils.NeoConnection, t *testing.T, assert *assert.Assertions) bool {
+
+	result := []struct {
+		uuid string `json:"thing.uuid"`
+	}{}
+
+	checkGraph := neoism.CypherQuery{
+		Statement: `
+			MATCH (a:Thing {uuid: "%s"})
+			WITH a, count(labels(a)) as l
+			WHERE l = 1
+			RETURN a.uuid
+		`,
+		Parameters: neoism.Props{
+			"uuid": uuid,
+		},
+		Result: &result,
+	}
+
+	err := db.CypherBatch([]*neoism.CypherQuery{&checkGraph})
+	assert.NoError(err)
+
+	if len(result) > 0 {
+		return false
+	}
+
+	return true
+}
+
 
 func getDatabaseConnectionAndCheckClean(t *testing.T, assert *assert.Assertions) neoutils.NeoConnection {
 	db := getDatabaseConnection(assert)

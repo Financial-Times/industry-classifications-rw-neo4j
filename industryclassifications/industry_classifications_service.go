@@ -122,6 +122,7 @@ func (s service) Delete(uuid string, transactionID string) (bool, error) {
 			MATCH (p:Thing {uuid: {uuid}})
 			REMOVE p:Concept
 			REMOVE p:IndustryClassification
+			REMOVE p:Classification
 			SET p={props}
 		`,
 		Parameters: map[string]interface{}{
